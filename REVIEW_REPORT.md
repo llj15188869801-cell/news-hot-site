@@ -79,6 +79,7 @@
 
 - Cloudflare Worker: `news-hot`
 - 正式网址: https://news-hot.caixunradar.workers.dev/
+- GitHub 仓库: https://github.com/llj15188869801-cell/news-hot-site
 - 生产版本 ID: `6684bee5-6562-4dc7-9880-959c83c2f486`
 - 发布包大小: 301.05 KiB，gzip 后 71.00 KiB
 - 数据模式: 发布时从 `data/news.db` 导出静态快照
