@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI 精选内容 — 高质量文章推荐">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
+    <title>✨ 精选 - AI 热点聚合</title>
+    <link rel="stylesheet" href="/static/css/shared.css">
+    <style>
+        .curated-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: rgba(210, 153, 34, 0.15);
+            color: var(--gold);
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .translated-label {
+            font-size: 10px;
+            color: #8b949e;
+            background: rgba(88, 166, 255, 0.1);
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+    </style>
+    <script>
+        function toggleExpand(btn) {
+            var wrapper = btn.closest('.article-desc-wrapper');
+            var descEl = wrapper.querySelector('.article-desc');
+            var originalText = descEl.getAttribute('data-full') || descEl.textContent;
+            descEl.setAttribute('data-full', originalText);
+            if (btn.textContent === '展开') {
+                descEl.textContent = originalText;
+                descEl.style.webkitLineClamp = 'unset';
+                descEl.style.overflow = 'visible';
+                btn.textContent = '收起';
+            } else {
+                descEl.textContent = originalText.substring(0, 200);
+                descEl.style.webkitLineClamp = '2';
+                descEl.style.overflow = 'hidden';
+                btn.textContent = '展开';
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">🔥 <a href="/"><span>新闻</span>热点</a></div>
+            <form class="search-box" action="/search" method="get">
+                <input id="search-input" type="text" name="q" placeholder="搜索标题/摘要…" autocomplete="off">
+                <button type="submit">搜索</button>
+            </form>
+            <nav class="nav-links">
+                <a href="/">首页</a>
+                <a href="/curated" class="active">✨ 精选</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2 style="font-size: 24px; margin-bottom: 20px;">✨ 精选</h2>
+        {% if not articles %}
+        <div class="empty">
+            <h3>暂无精选</h3>
+            <p>运行爬虫后会自动标记高价值内容</p>
+        </div>
+        {% else %}
+            {% for article in articles %}
+            <div class="article">
+                <div class="article-meta">
+                    {% if article.category %}<span class="article-cat">{{ article.category }}</span>{% endif %}
+                    {% if article.source_name %}<span class="article-source">{{ article.source_name }}</span>{% endif %}
+                    <span class="curated-badge">✨ 精选</span>
+                </div>
+                <div class="article-title">
+                    <a href="/article/{{ article.id }}" target="_blank" rel="noopener noreferrer">
+                        {{ article.translated_title if article.translated_title else article.title }}
+                    </a>
+                </div>
+                {% if article.description %}
+                <div class="article-desc-wrapper">
+                    <div class="article-desc" data-full="{{ article.translated_desc if article.translated_desc and article.translated_desc != article.description else article.description }}">{{ article.translated_desc[:200] if article.translated_desc and article.translated_desc != article.description else article.description[:200] }}</div>
+                    {% if (article.translated_desc and article.translated_desc|length > 200) or (article.description and article.description|length > 200) %}
+                    <button class="expand-btn" onclick="toggleExpand(this)">展开</button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% endif %}
+    </main>
+
+    <footer class="footer">
+        <p>🔥 新闻热点 — AI 热点聚合</p>
+        <div class="site-stats" id="site-stats"></div>
+    </footer>
+    <script>
+        fetch('/health')
+            .then(r => r.json())
+            .then(data => {
+                var db = data.database;
+                document.getElementById('site-stats').innerHTML =
+                    '共收录 ' + db.total_articles + ' 篇文章 · ' + db.total_sources + ' 个信源 · ' + db.featured_articles + ' 篇精选';
+            })
+            .catch(() => {});
+    </script>
+</body>
+</html>

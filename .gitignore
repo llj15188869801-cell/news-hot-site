@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+node_modules/
+
+# Data
+data/*.db
+data/*.log
+
+# Backup files
+*.bak
+*.pre_review
+*.fixed
+
+# Logs
+*.log
+
+# Cloudflare build output
+dist/worker/
+.wrangler/
+
+# Unrelated local folders
+WorkBuddyopenclaw-mission-control/
+EWorkBuddy/
+
+# OS
+.DS_Store
+Thumbs.db

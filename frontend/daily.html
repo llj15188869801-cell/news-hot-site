@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📰 日报 | AI 热点聚合</title>
+    <link rel="stylesheet" href="/static/css/shared.css">
+    <style>
+        .translated-label {
+            font-size: 10px;
+            color: #8b949e;
+            background: rgba(88, 166, 255, 0.1);
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">🔥 <a href="/"><span>新闻</span>热点</a></div>
+            <form class="search-box" action="/search" method="get">
+                <input id="search-input" type="text" name="q" placeholder="搜索标题/摘要…" autocomplete="off">
+                <button type="submit">搜索</button>
+            </form>
+            <nav class="nav-links">
+                <a href="/">首页</a>
+                <a href="/curated">✨ 精选</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2 style="font-size: 24px; margin-bottom: 8px;">📰 日报</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">{{ date_str }}</p>
+
+        {% if digest %}
+        <div class="article" style="margin-bottom: 20px; border-color: var(--accent);">
+            <div class="article-title" style="font-size: 16px; margin-bottom: 8px;">🤖 AI 日报摘要</div>
+            <div class="desc">{{ digest.content[:2000] }}</div>
+        </div>
+        {% endif %}
+
+        {% if not articles %}
+        <div class="empty">
+            <h3>暂无内容</h3>
+            <p>这一天还没有文章</p>
+        </div>
+        {% else %}
+            {% for article in articles %}
+            <div class="article">
+                <div class="article-meta">
+                    {% if article.category %}<span class="article-cat">{{ article.category }}</span>{% endif %}
+                    {% if article.source_name %}<span class="article-source">{{ article.source_name }}</span>{% endif %}
+                    <span class="article-time">{{ article.published_at[11:16] if article.published_at and article.published_at|length >= 16 else '' }}</span>
+                </div>
+                <div class="article-title">
+                    <a href="/article/{{ article.id }}" target="_blank" rel="noopener noreferrer">
+                        {{ article.translated_title if article.translated_title else article.title }}
+                    </a>
+                </div>
+                {% if article.description %}
+                <div class="article-desc">{{ article.translated_desc[:200] if article.translated_desc and article.translated_desc != article.description else article.description[:200] }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% endif %}
+    </main>
+
+    <footer class="footer">
+        <p>🔥 新闻热点 — AI 热点聚合</p>
+    </footer>
+</body>
+</html>

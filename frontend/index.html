@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI 热点聚合平台，实时追踪全球 AI 领域最新新闻、技术突破和产品动态。">
+    <meta name="keywords" content="AI, 人工智能, 新闻, 热点, 聚合, RSS">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    <meta property="og:title" content="🔥 新闻热点 - AI 热点聚合">
+    <meta property="og:description" content="实时追踪全球 AI 领域最新新闻">
+    <meta property="og:type" content="website">
+    <title>新闻热点 | AI 热点聚合</title>
+    <link rel="stylesheet" href="/static/css/shared.css">
+    <style>
+        .article-featured { color: var(--gold); }
+        .curated-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: rgba(210, 153, 34, 0.15);
+            color: var(--gold);
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .hot-item { display: flex; align-items: center; gap: 6px; }
+        .hot-score { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+        .translated-label {
+            font-size: 10px;
+            color: #8b949e;
+            background: rgba(88, 166, 255, 0.1);
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+    </style>
+    <style>
+        .toggle-btn {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .toggle-btn:hover { border-color: var(--accent); }
+        .toggle-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .original-text { display: none; }
+        .show-original .translated-text { display: none; }
+        .show-original .original-text { display: inline; }
+    </style>
+    <script>
+        // 原文/译文切换
+        let showOriginal = false;
+        function toggleLang() {
+            showOriginal = !showOriginal;
+            document.querySelectorAll('.article').forEach(function(el) {
+                el.classList.toggle('show-original', showOriginal);
+            });
+            document.querySelectorAll('.hot-link').forEach(function(el) {
+                el.classList.toggle('show-original', showOriginal);
+            });
+            document.querySelectorAll('.toggle-lang-btn').forEach(function(btn) {
+                btn.classList.toggle('active', showOriginal);
+                btn.textContent = showOriginal ? '显示原文' : '显示译文';
+            });
+        }
+
+        // 描述展开/收起
+        function toggleExpand(btn) {
+            var wrapper = btn.closest('.article-desc-wrapper');
+            var descEl = wrapper.querySelector('.article-desc');
+            var fullText = descEl.getAttribute('data-full');
+            if (!fullText) {
+                fullText = descEl.textContent;
+                descEl.setAttribute('data-full', fullText);
+            }
+            if (btn.textContent === '展开') {
+                descEl.textContent = fullText;
+                descEl.style.webkitLineClamp = 'unset';
+                descEl.style.overflow = 'visible';
+                btn.textContent = '收起';
+            } else {
+                descEl.textContent = fullText.substring(0, 200);
+                descEl.style.webkitLineClamp = '2';
+                descEl.style.overflow = 'hidden';
+                btn.textContent = '展开';
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">🔥 <a href="/"><span>新闻</span>热点</a></div>
+            <form class="search-box" action="/search" method="get">
+                <label for="search-input" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">搜索</label>
+                <input id="search-input" type="text" name="q" placeholder="搜索标题/摘要…" autocomplete="off">
+                <button type="submit">搜索</button>
+            </form>
+            <nav class="nav-links">
+                <a href="/" class="{% if not search_query %}active{% endif %}">首页</a>
+                <a href="/curated">✨ 精选</a>
+                {% for d in digest_dates[:3] %}
+                <a href="/daily/{{ d }}">📰 日报</a>
+                {% endfor %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- 热点板块 -->
+        {% if hot_articles %}
+        <div class="hot-section">
+            <div class="hot-title">🔥 当前热点</div>
+            <div class="hot-subtitle">多信源热度 · 随时间衰减</div>
+            <ol class="hot-list">
+                {% for h in hot_articles %}
+                <li>
+                    <span class="hot-rank">{{ loop.index }}</span>
+                    <a class="hot-link" href="/article/{{ h.id }}" target="_blank" rel="noopener noreferrer">
+                        {{ h.translated_title if h.translated_title else h.title }}
+                    </a>
+                    {% if h.source_count and h.source_count > 1 %}
+                    <span class="article-source" style="font-size:11px;">{{ h.source_count }}个信源</span>
+                    {% endif %}
+                    {% if h.translated_title and h.translated_title != h.title %}
+                    <span class="translated-label">译</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
+
+        <!-- 分类筛选 -->
+        <div class="category-bar">
+            <a href="/" class="all-cat {% if not selected_category %}active{% endif %}">全部</a>
+            {% for cat in categories %}
+            <a href="?category={{ cat }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+               class="{% if selected_category == cat %}active{% endif %}">{{ cat }}</a>
+            {% endfor %}
+        </div>
+
+        <!-- 时间线文章 -->
+        {% if not articles %}
+        <div class="empty">
+            <h3>暂无内容</h3>
+            <p>运行爬虫抓取 RSS 源后，这里会显示新闻</p>
+        </div>
+        {% else %}
+            {% set dates = namespace(last='') %}
+            {% for article in articles %}
+                {% set article_date = (article.published_at[:10] if article.published_at and article.published_at|length >= 10 else '') %}
+                {% if article_date != dates.last %}
+                    {% if dates.last %}</div>{% endif %}
+                    <div class="date-header">📅 {{ article_date }}</div>
+                    {% set dates.last = article_date %}
+                {% endif %}
+                <div class="article">
+                    <div class="article-meta">
+                        <span class="article-time">{{ article.published_at[11:16] if article.published_at and article.published_at|length >= 16 else '' }}</span>
+                        {% if article.category %}<span class="article-cat">{{ article.category }}</span>{% endif %}
+                        {% if article.source_name %}<span class="article-source">{{ article.source_name }}</span>{% endif %}
+                        {% if article.is_featured %}<span class="curated-badge">✨ 精选</span>{% endif %}
+                    </div>
+                    <div class="article-title">
+                        <a href="/article/{{ article.id }}" target="_blank" rel="noopener noreferrer">
+                            {{ article.translated_title if article.translated_title else article.title }}
+                        </a>
+                        {% if article.translated_title and article.translated_title != article.title %}
+                        <span class="translated-label">译</span>
+                        {% endif %}
+                    </div>
+                    {% if article.translated_desc and article.translated_desc != article.description %}
+                    <div class="article-desc-wrapper">
+                        <div class="article-desc" data-full="{{ article.translated_desc }}">{{ article.translated_desc[:200] }}</div>
+                        {% if article.translated_desc|length > 200 %}
+                        <button class="expand-btn" onclick="toggleExpand(this)">展开</button>
+                        {% endif %}
+                    </div>
+                    {% elif article.description %}
+                    <div class="article-desc-wrapper">
+                        <div class="article-desc" data-full="{{ article.description }}">{{ article.description[:200] }}</div>
+                        {% if article.description|length > 200 %}
+                        <button class="expand-btn" onclick="toggleExpand(this)">展开</button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            {% if dates.last %}</div>{% endif %}
+        {% endif %}
+    </main>
+
+    <footer class="footer">
+        <p>🔥 新闻热点 — AI 热点聚合 | 数据来源：多信源 RSS</p>
+        <div class="site-stats" id="site-stats">加载中...</div>
+    </footer>
+    <script>
+        fetch('/health')
+            .then(r => r.json())
+            .then(data => {
+                var db = data.database;
+                document.getElementById('site-stats').innerHTML =
+                    '共收录 ' + db.total_articles + ' 篇文章 · ' + db.total_sources + ' 个信源 · ' + db.featured_articles + ' 篇精选 · 数据范围: ' +
+                    (db.date_range_start || '?') + ' ~ ' + (db.date_range_end || '?');
+            })
+            .catch(() => {
+                document.getElementById('site-stats').textContent = '';
+            });
+    </script>
+</body>
+</html>

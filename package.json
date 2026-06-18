@@ -1,0 +1,14 @@
+{
+  "name": "news-hot-site-worker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "export:data": "python scripts/export_worker_data.py",
+    "build": "wrangler deploy --dry-run --outdir dist/worker",
+    "deploy": "wrangler deploy",
+    "deploy:local": "npm run export:data && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.100.0"
+  }
+}
